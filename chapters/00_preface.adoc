@@ -48,7 +48,7 @@ techniques.
 
 === How this book is organized
 
-This book consists of 11 chapters. Depending on your level of existing
+This book consists of 13 chapters. Depending on your level of existing
 expertise, some of them can be safely skipped.
 
 Chapter 1 - <<Chapter_regular_expressions>>  - This chapter gives an
@@ -67,32 +67,36 @@ Chapter 4 - <<Chapter_rewriterule>> - The `RewriteRule` directive is the
 one you'll be using most often. This chapter covers its syntax and
 usage.
 
-Chapter 5 - <<Chapter_rewriterule_flags>> - Flags modify the behavior of
+Chapter 5 - <<Chapter_rewrite_logging>> - The rewrite log is a great
+debugging tool, and also a good way to learn about how `mod_rewrite`
+thinks about things.
+
+Chapter 6 - <<Chapter_rewriterule_flags>> - Flags modify the behavior of
 `RewriteRule`. They've been introduced in the previous chapter, but this
 chapter covers each flag in detail, with examples.
 
-Chapter 6 - <<Chapter_rewritecond>> - `RewriteCond` allows you to put
+Chapter 7 - <<Chapter_rewritecond>> - `RewriteCond` allows you to put
 conditions on the running of a particular `RewriteRule`.
 
-Chapter 7 - <<Chapter_rewritemap>> - The `RewriteMap` directive allows
+Chapter 8 - <<Chapter_rewritemap>> - The `RewriteMap` directive allows
 you to craft your own `RewriteRule` logic and lookup tables.
 
-Chapter 8 - <<Chapter_proxy>> - `RewriteRule`'s `[P]` flag lets you pass
+Chapter 9 - <<Chapter_proxy>> - `RewriteRule`'s `[P]` flag lets you pass
 a request through a proxy. This chapter digs into that in greater
 detail.
 
-Chapter 9 - <<Chapter_vhosts>> - Using `RewriteRule` to manage virtual
+Chapter 10 - <<Chapter_vhosts>> - Using `RewriteRule` to manage virtual
 hosts.
 
-Chapter 10 - <<Chapter_access>> - Using `RewriteRule` to control or
+Chapter 11 - <<Chapter_access>> - Using `RewriteRule` to control or
 restrict access to resources.
 
-Chapter 11 - <<Chapter_configurable_configuration>> - New in version 2.4
+Chapter 12 - <<Chapter_configurable_configuration>> - New in version 2.4
 of the web server is a class of directives that let you add intelligence
 and request-time decisions to the configuration. These techniques
 replace many of the things that people used to use `mod_rewrite` for.
 
-Chapter 12 - <<Chapter_content_munging>> - In this chapter, we
+Chapter 13 - <<Chapter_content_munging>> - In this chapter, we
 discuss rewriting content sent to the client, which is not something
 that `mod_rewrite` does.
 

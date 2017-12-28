@@ -1,6 +1,6 @@
 :author: Rich Bowen
 :revdate: {docdate}
-:revnumber: 0.03
+:revnumber: 0.30
 :email:  rbowen@apache.org
 :copyright: CC-BY-SA 3.0
 :doctype: book
@@ -86,29 +86,32 @@ include::chapters/03_mod_rewrite.adoc[]
 // <<Chapter_rewriterule>>
 include::chapters/04_rewriterule.adoc[]
 
+// <<Chapter_rewrite_logging>>
+include::chapters/05_rewrite_logging.adoc[]
+
 // <<Chapter_rewriterule_flags>>
-include::chapters/05_rewrite_flags.adoc[]
+include::chapters/06_rewrite_flags.adoc[]
 
 // <<Chapter_rewritecond>>
-include::chapters/06_rewritecond.adoc[]
+include::chapters/07_rewritecond.adoc[]
 
 // <<Chapter_rewritemap>>
-include::chapters/07_rewritemap.adoc[]
+include::chapters/08_rewritemap.adoc[]
 
 // <<Chapter_proxy>>
-include::chapters/08_proxy.adoc[]
+include::chapters/09_proxy.adoc[]
 
 // <<Chapter_vhosts>>
-include::chapters/09_vhosts.adoc[]
+include::chapters/10_vhosts.adoc[]
 
 // <<Chapter_access>>
-include::chapters/10_access.adoc[]
+include::chapters/11_access.adoc[]
 
 // <<Chapter_configurable_configuration>>
-include::chapters/11_configurable_configuration.adoc[]
+include::chapters/12_configurable_configuration.adoc[]
 
 // <<Chapter_content_munging>>
-include::chapters/12_content_munging.adoc[]
+include::chapters/13_content_munging.adoc[]
 
 
 
