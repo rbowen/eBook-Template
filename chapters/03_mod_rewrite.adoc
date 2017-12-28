@@ -1,0 +1,1206 @@
+[[Chapter_mod_rewrite]]
+== Introduction to mod_rewrite
+
+mod_rewrite is the power tool of Apache httpd URL mapping. Of course,
+sometimes you just need a screwdriver, but when you need the power tool,
+it's good to know where to find it.
+
+mod_rewrite provides sophisticated URL via regular expressions, and the
+ability to do a variety of transformations,including, but not limited
+to, modification of the request URL. You can additionally return a
+variety of status codes, set cookies and environment variables, proxy
+requests to another server, or send redirects to the client.
+
+In this chapter we'll cover mod_rewrite syntax and usage, and in the
+next chapter we'll give a variety of examples of using mod_rewrite in
+common scenarios.
+
+[[loading-mod_rewrite]]
+=== Loading mod_rewrite
+
+To use mod_rewrite in any context, you need to have the module loaded.
+If you're the server administrator, this means having the following line
+somewhere in your Apache httpd configuration:
+
+----
+LoadModule rewrite_module modules/mod_rewrite.so
+----
+
+This tells httpd that it needs to load mod_rewrite at startup time, so
+as to make its functionality available to your configuration files.
+
+If you are not the server administrator, then you'll need to ask your
+server administrator if the module is available, or experiment to see if
+it is. If you're not sure, you can test to see whether it's enabled in
+the following manner.
+
+Create a subdirectory in your document directory. Let's call it
+test_rewrite
+
+Create a file in that directory called .htaccess and put the following
+text in it:
+
+----
+RewriteEngine on
+----
+
+Create another file in that directory called index.html containing the
+following text:
+
+----
+<html>
+Hello, mod_rewrite
+</html>
+----
+
+Now, point your browser at that location:
+
+----
+http://example.com/test_rewrite/index.html
+----
+
+You'll see one of two things. Either you'll see the words
+Hello, mod_rewrite in your browser, or you'll see the ominous words
+Internal Server Error. In the former case, everything is fine -
+mod_rewrite is loaded and your `.htacces` file worked just fine. If you
+got an Internal Server Error, that was httpd complaining that it didn't
+know what to do with the `RewriteEngine` directive, because mod_rewrite
+wasn't loaded.
+
+If you have access to the server's error log file, you'll see the
+following in it:
+
+----
+Invalid command 'RewriteEngine', perhaps misspelled or defined by a module not included in the server configuration
+----
+
+Which is httpd's way of saying that you used a directive
+(`RewriteEngine`) without first loading the module that defines that
+directive.
+
+If you see the Internal Server Error message, or that log file message,
+it's time to contact your server administrator and ask if they'll load
+mod_rewrite for you.
+
+However, this is fairly unlikely, since mod_rewrite is a fairly standard
+part of any Apache http server's bag of tricks.
+
+[[rewriteengine]]
+=== RewriteEngine
+
+In the section above, we used the `RewriteEngine` directive without
+defining what it does.
+
+The `RewriteEngine` directive enables or disables the runtime rewriting
+engine. The directive defaults to `off`, so the result is that rewrite
+directives will be ignored in any scope where you don't have the
+following:
+
+----
+RewriteEngine On
+----
+
+While we won't always include that in every example in this book, it
+should be assumed, from this point forward, that every use of
+mod_rewrite occurs in a scope where `RewriteEngine` has been turned on.
+
+[[mod_rewrite-in-.htaccess-files]]
+=== mod_rewrite in .htaccess files
+
+Before we go any further, it's critical to note that things are
+different, in several important ways, if you have to use .htaccess files
+for configuration.
+
+[[what-are-.htaccess-files]]
+==== What are .htaccess files?
+
+`.htaccess` files are per-directory configuration files, for use by people
+who don't have access to the main server configuration file. For the
+most part, you put configuration directives into .htaccess files just as
+you would in a `<Directory>` block in the server configuration, but
+there are some differences.
+
+The most important of these differences is that the .htaccess file is
+consulted every time a resource is requested from the directory in
+question, whereas configurations placed in the main server configuration
+file are loaded once, at server startup.
+
+The positive side of this is that you can modify the contents of a
+.htaccess file and have the change take effect immediately, as of the
+next request received by the server.
+
+The negative is that the .htaccess file needs to be loaded from the
+filesystem on every request, resulting in an incremental slowdown for
+every request. Additionally, because httpd doesn't know ahead of time
+what directories contain .htaccess files, it has to look in each
+directory for them, all along the path to the requested resource, which
+results in a slowdown that grows with the depth of the directory tree.
+
+In Apache httpd 2.2 and earlier, .htaccess files are enabled by default
+- that is the configuration directive that enables them,
+`AllowOverride`, has a default value of `All`. In 2.4 and later, it has
+a default value of `None`, so .htaccess files are disabled by default.
+
+A typical configuration to permit the use of .htaccess files looks like:
+
+----
+<Directory />
+    AllowOverride None
+</Directory>
+
+DocumentRoot /var/www/html
+<Directory /var/www/html>
+    AllowOverride All
+    Options +FollowSymLinks
+</Directory /var/www/html>
+----
+
+That is to say, .htaccess files are disallowed for the entire
+filesystem, starting at the root, but then are permitted in the document
+directories. This prevents httpdfootnote:[Or, more to the point, it
+prevents malicious end-users from finding ways to look there.] from
+looking for .htaccess files in `/`, `/var`, and `/var/www` on the way to
+looking in `/var/www/html`.
+
+Note that in order to enable the use of mod_rewrite directives in
+`.htaccess` files, you also need to enable `Options FollowSymLinks`. A
+`RewriteRule` may be thought of as a kind of symlink, because it allows
+you to serve content from other directories via a rewrite. Thus, for
+reasons of security, it is necessary to enable symlinks in order to use
+mod_rewrite.
+
+[[ok-so-whats-the-deal-with-mod_rewrite-in-.htaccess-files]]
+==== Ok, so, what's the deal with mod_rewrite in .htaccess files?
+
+There are two major differences that you must be aware of before we
+proceed any further. The exact implications of these differences will
+become more apparent as we go, but I wouldn't want them to surprise you.
+
+First, there are two directives that you cannot use in .htaccess files.
+These directives are `RewriteMap` and (prior to httpd 2.4) `RewriteLog`.
+These must be defined in the main server configuration. The reasons for
+this will be discussed in greater length when we get to the sections
+about those directives RewriteMap and RewriteLogging, respectively.).
+
+Second, and more importantly, the syntax of `RewriteRule` directives
+changes in .htaccess context in a way that you'll need to be aware of
+every time you write a `RewriteRule`. Specifically, the directory path
+that you're in will be removed from the URL path before it is presented
+to the `RewriteRule`.
+
+The exact implications of this will become clearer as we show you
+examples. And, indeed, every example in this book will be presented in a
+form for the main config, and a form for .htaccess files, whenever there
+is a difference between the two forms. But we'll start with a simple
+example to illustrate the idea.
+
+Some of this, you'll need to take on faith at the moment, since we've
+not yet introduced several of the concepts presented in this example, so
+please be patient for now.
+
+Consider a situation where you want to apply a rewrite to content in the
+`/images/puppies/` subdirectory of your website. You have four options:
+You can put the `RewriteRule` in the main server configuration file; You
+can place it in a .htacess file in the root of your website; You can
+place it in a .htaccess file in the `images` directory; Or you can place
+it in a .htaccess file in the `images/puppies` directory.
+
+Here's what the rule might look like in those various scenarios:
+
+[cols=",",options="header",]
+|===================================================================
+|Location |Rule
+|Main config |`RewriteRule ^/images/puppies/(.*).jpg /dogs/$1.gif`
+|Root directory |`RewriteRule ^images/puppies/(.*).jpg /dogs/$1.gif`
+|images directory |`RewriteRule ^puppies/(.*).jpg /dogs/$1.gif`
+|images/puppies directory |`RewriteRule ^(.*).jpg /dogs/$1.gif`
+|===================================================================
+
+For the moment, don't worry too much about what the individual rules do.
+Look instead at the URL path that is being considered in each rule, and
+notice that for each directory that a .htaccess file is placed in, the
+directory path that `RewriteRule` may consider is relative to that
+directory, and anything above that becomes invisible for the purpose of
+mod_rewrite.
+
+Don't worry too much if this isn't crystal clear at this point. It will
+become more clear as we proceed and you see more examples.
+
+[[so-what-do-i-do]]
+==== So, what do I do?
+
+If you don't have access to the main server configuration file, as it
+the case for many of the readers of this book, don't despair.
+mod_rewrite is still a very powerful tool, and can be persuaded to do
+almost anything that you need it to do. You just need to be aware of its
+limitations, and adjust accordingly when presented with an example rule.
+
+We aim to help you do that at each step along this journey.
+
+[[rewriteoptions]]
+=== RewriteOptions
+
+RewriteOptions TODO
+
+[[section_rewriterule]]
+=== RewriteRule
+
+We'll start the main technical discussion of mod_rewrite with the
+RewriteRule directive, as it is the workhorse of mod_rewrite, and the
+directive that you'll encounter most frequently.
+
+RewriteRule performs manipulation of a requested URL, and along the way
+can do a number of additional things.
+
+The syntax of a RewriteRule is fairly simple, but you'll find that
+exploring all of the possible permutations of it will take a while. So
+we'll provide a lot of examples along the way to illustrate.
+
+If you learn best by example, you may want to jump back and forth
+between this section and <<rewrite-examples>> to help you make sense
+of this all.
+
+
+[[syntax]]
+==== Syntax
+
+A RewriteRule directive has two required directives and optional flags.
+It looks like:
+
+----
+RewriteRule PATTERN TARGET [FLAGS]
+----
+
+The following sections will discuss each of those arguments in great
+detail, but these are defined as:
+
+PATTERN::
+  A regular expression to be applied to the requested URI.
+TARGET::
+  What the URI will be rewritten to.
+FLAGS::
+  Optional flags that modify the behavior of the rule.
+
+[[pattern]]
+==== Pattern
+
+The `PATTERN` argument of the `RewriteRule` is a regular expression that
+is applied to the URL path, or file path, depending on the context.
+
+In VirtualHost context, or in server-wide context, `PATTERN` will be
+matched against the part of the URL after the hostname and port, and
+before the query string. For example, in the URL
+<http://example.com/dogs/index.html?dog=collie>, the pattern will be
+matched against `/dogs/index.html`.
+
+In Directory and htaccess context, `PATTERN` will be matched against the
+filesystem path, after removing the prefix that led the server to the
+current `RewriteRule` (e.g. either "dogs/index.html" or "index.html"
+depending on where the directives are defined).
+
+Subsequent `RewriteRule` patterns are matched against the output of the
+last matching `RewriteRule`.
+
+It is assumed, at this point, that you've already read the chapter
+Introduction to Regular Expressions, and/or are familiar with what a
+regular expression is, and how to craft one.
+
+[[target]]
+==== Target
+
+The target of a `RewriteRule` can be one of the following:
+
+[[a-file-system-path]]
+===== A file-system path
+
+Designates the location on the file-system of the resource to be
+delivered to the client. Substitutions are only treated as a file-system
+path when the rule is configured in server (virtualhost) context and the
+first component of the path in the substitution exists in the
+file-system
+
+[[url-path]]
+===== URL-path
+
+A DocumentRoot-relative path to the resource to be served. Note that
+mod_rewrite tries to guess whether you have specified a file-system path
+or a URL-path by checking to see if the first segment of the path exists
+at the root of the file-system. For example, if you specify a
+Substitution string of `/www/file.html`, then this will be treated as a
+URL-path unless a directory named www exists at the root or your
+file-system (or, in the case of using rewrites in a .htaccess file,
+relative to your document root), in which case it will be treated as a
+file-system path. If you wish other URL-mapping directives (such as
+Alias) to be applied to the resulting URL-path, use the `[PT]` flag as
+described below.
+
+[[absolute-url]]
+===== Absolute URL
+
+If an absolute URL is specified, mod_rewrite checks to see whether the
+hostname matches the current host. If it does, the scheme and hostname
+are stripped out and the resulting path is treated as a URL-path.
+Otherwise, an external redirect is performed for the given URL. To force
+an external redirect back to the current host, see the `[R]` flag below.
+
+[[dash]]
+===== - (dash)
+
+A dash indicates that no substitution should be performed (the existing
+path is passed through untouched). This is used when a flag (see below)
+needs to be applied without changing the path.
+
+[[rewritebase]]
+RewriteBase
+
+[[rewritecond]]
+RewriteCond
+
+The `RewriteCond` directive attaches additional conditions on a
+`RewriteRule`, and may also set backreferences that may be used in the
+rewrite target.
+
+One or more `RewriteCond` directives may precede a `RewriteRule`
+directive. That `RewriteRule` is then applied only if the current state
+of the URI matches its pattern, and all of these conditions are met.
+
+The `RewriteCond` directive has the following syntax:
+
+----
+RewriteCond TestString  CondPattern [Flag]
+----
+
+The arguments have the following meaning:
+
+TestString::
+  Any string or variable to be tested for a match.
+CondPattern::
+  A regular expression or other other expression to be compared against
+  the TestString.
+Flag::
+  One or more flags which modify the behavior of the condition.
+
+These definitions will be expanded in the sections below.
+
+[[teststring]]
+TestString
+
+TestString is a string which can contain the following expanded
+constructs in addition to plain text:
+
+RewriteRule backreferences::
+  These are backreferences of the form $N (0 <= N <= 9). $1 to $9
+  provide access to the grouped parts (in parentheses) of the pattern,
+  from the RewriteRule which is subject to the current set of
+  RewriteCond conditions. $0 provides access to the whole string matched
+  by that pattern.
+RewriteCond backreferences::
+  These are backreferences of the form %N (0 <= N <= 9). %1 to %9
+  provide access to the grouped parts (again, in parentheses) of the
+  pattern, from the last matched RewriteCond in the current set of
+  conditions. %0 provides access to the whole string matched by that
+  pattern.
+RewriteMap expansions::
+  These are expansions of the form $\{mapname:key|default}. See the
+  documentation for RewriteMap for more details.
+Server-Variables::
+  These are variables of the form %\{ NAME_OF_VARIABLE } where
+  NAME_OF_VARIABLE can be a string taken from the following list:
+
+HTTP headers:
+
+HTTP_USER_AGENT HTTP_REFERER HTTP_COOKIE HTTP_FORWARDED HTTP_HOST
+HTTP_PROXY_CONNECTION HTTP_ACCEPT
+
+connection & request:
+
+REMOTE_ADDR REMOTE_HOST REMOTE_PORT REMOTE_USER REMOTE_IDENT
+REQUEST_METHOD SCRIPT_FILENAME PATH_INFO QUERY_STRING AUTH_TYPE
+
+server internals:
+
+DOCUMENT_ROOT SERVER_ADMIN SERVER_NAME SERVER_ADDR SERVER_PORT
+SERVER_PROTOCOL SERVER_SOFTWARE
+
+date and time:
+
+TIME_YEAR TIME_MON TIME_DAY TIME_HOUR TIME_MIN TIME_SEC TIME_WDAY TIME
+
+specials:
+
+API_VERSION THE_REQUEST REQUEST_URI REQUEST_FILENAME IS_SUBREQ HTTPS
+REQUEST_SCHEME
+
+These variables all correspond to the similarly named HTTP MIME-headers,
+C variables of the Apache HTTP Server or struct tm fields of the Unix
+system. Most are documented elsewhere in the Manual or in the CGI
+specification.
+
+SERVER_NAME and SERVER_PORT depend on the values of UseCanonicalName and
+UseCanonicalPhysicalPort respectively.
+
+Those that are special to mod_rewrite include those below.
+
+IS_SUBREQ::
+  Will contain the text "true" if the request currently being processed
+  is a sub-request, "false" otherwise. Sub-requests may be generated by
+  modules that need to resolve additional files or URIs in order to
+  complete their tasks.
+API_VERSION::
+  This is the version of the Apache httpd module API (the internal
+  interface between server and module) in the current httpd build, as
+  defined in include/ap_mmn.h. The module API version corresponds to the
+  version of Apache httpd in use (in the release version of Apache httpd
+  1.3.14, for instance, it is 19990320:10), but is mainly of interest to
+  module authors.
+THE_REQUEST::
+  The full HTTP request line sent by the browser to the server (e.g.,
+  "GET /index.html HTTP/1.1"). This does not include any additional
+  headers sent by the browser. This value has not been unescaped
+  (decoded), unlike most other variables below.
+REQUEST_URI::
+  The path component of the requested URI, such as "/index.html". This
+  notably excludes the query string which is available as as its own
+  variable named QUERY_STRING.
+REQUEST_FILENAME::
+  The full local filesystem path to the file or script matching the
+  request, if this has already been determined by the server at the time
+  REQUEST_FILENAME is referenced. Otherwise, such as when used in
+  virtual host context, the same value as REQUEST_URI. Depending on the
+  value of AcceptPathInfo, the server may have only used some leading
+  components of the REQUEST_URI to map the request to a file.
+HTTPS::
+  Will contain the text "on" if the connection is using SSL/TLS, or
+  "off" otherwise. (This variable can be safely used regardless of
+  whether or not mod_ssl is loaded).
+REQUEST_SCHEME::
+  Will contain the scheme of the request (usually "http" or "https").
+  This value can be influenced with ServerName.
+
+If the TestString has the special value expr, the CondPattern will be
+treated as an ap_expr. HTTP headers referenced in the expression will be
+added to the Vary header if the novary flag is not given.
+
+Other things you should be aware of:
+
+The variables SCRIPT_FILENAME and REQUEST_FILENAME contain the same
+value - the value of the filename field of the internal request_rec
+structure of the Apache HTTP Server. The first name is the commonly
+known CGI variable name while the second is the appropriate counterpart
+of REQUEST_URI (which contains the value of the uri field of
+request_rec).
+
+If a substitution occurred and the rewriting continues, the value of
+both variables will be updated accordingly.
+
+If used in per-server context (i.e., before the request is mapped to the
+filesystem) SCRIPT_FILENAME and REQUEST_FILENAME cannot contain the full
+local filesystem path since the path is unknown at this stage of
+processing. Both variables will initially contain the value of
+REQUEST_URI in that case. In order to obtain the full local filesystem
+path of the request in per-server context, use an URL-based look-ahead
+`%{LA-U:REQUEST_FILENAME}` to determine the final value of
+REQUEST_FILENAME.
+
+`%{ENV:variable}`, where variable can be any environment variable, is
+also available. This is looked-up via internal Apache httpd structures
+and (if not found there) via getenv() from the Apache httpd server
+process.
+
+`%{SSL:variable}`, where variable is the name of an SSL environment
+variable, can be used whether or not mod_ssl is loaded, but will always
+expand to the empty string if it is not. Example:
+`%{SSL:SSL_CIPHER_USEKEYSIZE}` may expand to 128.
+
+`%{HTTP:header}`, where header can be any HTTP MIME-header name, can
+always be used to obtain the value of a header sent in the HTTP request.
+Example: `%{HTTP:Proxy-Connection}` is the value of the HTTP header
+Proxy-Connection:.
+
+If a HTTP header is used in a condition this header is added to the Vary
+header of the response in case the condition evaluates to to true for
+the request. It is not added if the condition evaluates to false for the
+request. Adding the HTTP header to the Vary header of the response is
+needed for proper caching.
+
+It has to be kept in mind that conditions follow a short circuit logic
+in the case of the 'ornext|OR' flag so that certain conditions might not
+be evaluated at all.
+
+`%{LA-U:variable}` can be used for look-aheads which perform an internal
+(URL-based) sub-request to determine the final value of variable. This
+can be used to access variable for rewriting which is not available at
+the current stage, but will be set in a later phase.
+
+For instance, to rewrite according to the REMOTE_USER variable from
+within the per-server context (httpd.conf file) you must use
+`%{LA-U:REMOTE_USER}` - this variable is set by the authorization phases,
+which come after the URL translation phase (during which mod_rewrite
+operates).
+
+On the other hand, because mod_rewrite implements its per-directory
+context (.htaccess file) via the Fixup phase of the API and because the
+authorization phases come before this phase, you just can use
+`%{REMOTE_USER}` in that context.
+
+`%{LA-F:variable}` can be used to perform an internal (filename-based)
+sub-request, to determine the final value of variable. Most of the time,
+this is the same as LA-U above.
+
+[[condpattern]]
+CondPattern
+
+CondPattern is the condition pattern, a regular expression which is
+applied to the current instance of the TestString. TestString is first
+evaluated, before being matched against CondPattern.
+
+CondPattern is usually a perl compatible regular expression, but there
+is additional syntax available to perform other useful tests against the
+Teststring:
+
+You can prefix the pattern string with a '!' character (exclamation
+mark) to specify a non-matching pattern.
+
+You can perform lexicographical string comparisons:
+
+'<CondPattern' (lexicographically precedes)::
+  Treats the CondPattern as a plain string and compares it
+  lexicographically to TestString. True if TestString lexicographically
+  precedes CondPattern.
+'>CondPattern' (lexicographically follows)::
+  Treats the CondPattern as a plain string and compares it
+  lexicographically to TestString. True if TestString lexicographically
+  follows CondPattern.
+'=CondPattern' (lexicographically equal)::
+  Treats the CondPattern as a plain string and compares it
+  lexicographically to TestString. True if TestString is
+  lexicographically equal to CondPattern (the two strings are exactly
+  equal, character for character). If CondPattern is "" (two quotation
+  marks) this compares TestString to the empty string.
+'<=CondPattern' (lexicographically less than or equal to)::
+  Treats the CondPattern as a plain string and compares it
+  lexicographically to TestString. True if TestString lexicographically
+  precedes CondPattern, or is equal to CondPattern (the two strings are
+  equal, character for character).
+'>=CondPattern' (lexicographically greater than or equal to)::
+  Treats the CondPattern as a plain string and compares it
+  lexicographically to TestString. True if TestString lexicographically
+  follows CondPattern, or is equal to CondPattern (the two strings are
+  equal, character for character).
+
+You can perform integer comparisons:
+
+'-eq' (is numerically equal to)::
+  The TestString is treated as an integer, and is numerically compared
+  to the CondPattern. True if the two are numerically equal.
+'-ge' (is numerically greater than or equal to)::
+  The TestString is treated as an integer, and is numerically compared
+  to the CondPattern. True if the TestString is numerically greater than
+  or equal to the CondPattern.
+'-gt' (is numerically greater than)::
+  The TestString is treated as an integer, and is numerically compared
+  to the CondPattern. True if the TestString is numerically greater than
+  the CondPattern.
+'-le' (is numerically less than or equal to)::
+  The TestString is treated as an integer, and is numerically compared
+  to the CondPattern. True if the TestString is numerically less than or
+  equal to the CondPattern. Avoid confusion with the -l by using the -L
+  or -h variant.
+'-lt' (is numerically less than)::
+  The TestString is treated as an integer, and is numerically compared
+  to the CondPattern. True if the TestString is numerically less than
+  the CondPattern. Avoid confusion with the -l by using the -L or -h
+  variant.
+
+You can perform various file attribute tests:
+
+'-d' (is directory)::
+  Treats the TestString as a pathname and tests whether or not it
+  exists, and is a directory.
+'-f' (is regular file)::
+  Treats the TestString as a pathname and tests whether or not it
+  exists, and is a regular file.
+'-F' (is existing file, via subrequest)::
+  Checks whether or not TestString is a valid file, accessible via all
+  the server's currently-configured access controls for that path. This
+  uses an internal subrequest to do the check, so use it with care - it
+  can impact your server's performance!
+'-H' (is symbolic link, bash convention)::
+  See -l.
+'-l' (is symbolic link)::
+  Treats the TestString as a pathname and tests whether or not it
+  exists, and is a symbolic link. May also use the bash convention of -L
+  or -h if there's a possibility of confusion such as when using the -lt
+  or -le tests.
+'-L' (is symbolic link, bash convention)::
+  See -l.
+'-s' (is regular file, with size)::
+  Treats the TestString as a pathname and tests whether or not it
+  exists, and is a regular file with size greater than zero.
+'-U' (is existing URL, via subrequest)::
+  Checks whether or not TestString is a valid URL, accessible via all
+  the server's currently-configured access controls for that path. This
+  uses an internal subrequest to do the check, so use it with care - it
+  can impact your server's performance!
+'-x' (has executable permissions)::
+  Treats the TestString as a pathname and tests whether or not it
+  exists, and has executable permissions. These permissions are
+  determined according to the underlying OS.
+
+Note:
+
+All of these tests can also be prefixed by an exclamation mark ('!') to
+negate their meaning.
+
+If the TestString has the special value expr, the CondPattern will be
+treated as an ap_expr.
+
+In the below example, -strmatch is used to compare the REFERER against
+the site hostname, to block unwanted hotlinking.
+
+----
+RewriteCond expr "! %{HTTP_REFERER} -strmatch '*://%{HTTP_HOST}/*'"
+RewriteRule ^/images - [F]
+----
+
+[[flag]]
+Flag
+
+
+You can also set special flags for CondPattern by appending [flags] as
+the third argument to the RewriteCond directive, where flags is a
+comma-separated list of any of the following flags:
+
+'nocase|NC' (no case)::
+  This makes the test case-insensitive - differences between 'A-Z' and
+  'a-z' are ignored, both in the expanded TestString and the
+  CondPattern. This flag is effective only for comparisons between
+  TestString and CondPattern. It has no effect on filesystem and
+  subrequest checks.
+'ornext|OR' (or next condition)::
+  Use this to combine rule conditions with a local OR instead of the
+  implicit AND. Typical example:
+
+----
+RewriteCond %{REMOTE_HOST}  ^host1  [OR]
+RewriteCond %{REMOTE_HOST}  ^host2  [OR]
+RewriteCond %{REMOTE_HOST}  ^host3
+RewriteRule ...some special stuff for any of these hosts... 
+----
+
+Without this flag you would have to write the condition/rule pair three
+times.
+
+'novary|NV' (no vary)::
+  If a HTTP header is used in the condition, this flag prevents this
+  header from being added to the Vary header of the response.
+
+Using this flag might break proper caching of the response if the
+representation of this response varies on the value of this header. So
+this flag should be only used if the meaning of the Vary header is well
+understood.
+
+[[examples]]
+Examples
+
+Query Strings .. index:: rewritemap_int '''''''''''''
+
+[[files-and-directories]]
+Files and Directories
+
+[[rewritemap]]
+RewriteMap
+
+The `RewriteMap` directive gives you a way to call external mapping
+routines to simplify a `RewriteRule`. This external mapping can be a
+flat text file containing one-to-one mappings, or a database, or a
+script that produces mapping rules, or a variety of other similar
+things. In this chapter we'll discuss how to use a `RewriteMap` in a
+`RewriteRule` or `RewriteCond`.
+
+[[creating-a-rewritemap]]
+Creating a RewriteMap
+
+The `RewriteMap` directive creates an alias which you can then invoke in
+either a `RewriteRule` or `RewriteCond` directive. You can think of it
+as defining a function that you can call later on.
+
+The syntax of the `RewriteMap` directive is as follows:
+
+----
+RewriteMap MapName MapType:MapSource
+----
+
+Where the various parts of that syntax are defined as:
+
+MapName::
+  The name of the 'function' that you're creating
+MapType::
+  The type of the map. The various available map types are discussed
+  below.
+MapSource::
+  The location from which the map definition will be obtained, such as a
+  file, database query, or predefined function.
+
+The `RewriteMap` directive must be used either in virtualhost context,
+or in global server context. This is because a `RewriteMap` is loaded at
+server startup time, rather than at request time, and, as such, cannot
+be specified in a `.htaccess` file.
+
+[[using-a-rewritemap]]
+Using a RewriteMap
+
+Once you have defined a `RewriteMap`, you can then use it in a
+`RewriteRule` or `RewriteCond` as follows:
+
+----
+RewriteMap examplemap txt:/path/to/file/map.txt
+RewriteRule ^/ex/(.*) ${examplemap:$1}
+----
+
+Note in this example that the `RewriteMap`, named 'examplemap', is
+passed an argument, `$1`, which is captured by the `RewriteRule`
+pattern. It can also be passed an argument of another known variable.
+For example, if you wanted to invoke the `examplemap` map on the entire
+requested URI, you could use the variable `%{REQUEST_URI}` rather than
+`$1` in your invocation:
+
+----
+RewriteRule ^ ${examplemap:%{REQUEST_URI}}
+----
+
+[[rewritemap-types]]
+RewriteMap Types
+
+There are a number of different map types which may be used in a
+`RewriteMap`.
+
+[[int]]
+int
++++
+
+An `int` map type is an internal function, pre-defined by `mod_rewrite`
+itself. There are four such functions:
+
+[[toupper]]
+toupper
+
+The `toupper` internal function converts the provided argument text to
+all upper case characters.
+
+----
+# Convert any lower-case request to upper case and redirect
+RewriteMap uc int:toupper
+RewriteRule (.*?[a-z]+.*) ${uc:$1} [R=301]
+----
+
+[[tolower]]
+tolower
+
+The `tolower` is the opposite of `toupper`, converting any argument text
+to lower case characters.
+
+----
+# Convert any upper-case request to lower case and redirect
+RewriteMap lc int:tolower
+RewriteRule (.*?[A-Z]+.*) ${lc:$1} [R=301]
+----
+
+[[escape]]
+escape
+
+[[unescape]]
+unescape
+
+[[txt]]
+txt
++++
+
+A `txt` map defines a one-to-one mapping from argument to target.
+
+[[rnd]]
+rnd
++++
+
+A `rnd` map will randomly select one value from the specified text file.
+
+[[dbm]]
+dbm
++++
+
+[[prg]]
+prg
++++
+
+[[dbd]]
+dbd
++++
+
+[[proxying-with-mod_rewrite]]
+Proxying with mod_rewrite
+
+[[mod_rewrite-logging-and-debugging]]
+mod_rewrite logging and debugging
+
+[[logging]]
+Logging
+
+Exactly how you turn on logging for mod_rewrite will depend on what
+version of the Apache http server you are running. Logging got some
+updates in the 2.4 release of the server, and the rewrite log was one of
+the changes that happened at that time.
+
+If you're not sure what version you're running, you can get the `httpd`
+binary to tell you with the `-v` flag:
+
+----
+httpd -v
+----
+
+As with any other logging, the log file is opened when the server is
+started up, before the server relinquishes its root privileges. For this
+reason, the `RewriteLog` directive may not be used in `.htaccess` files,
+but may only be invoked in the server configuration file.
+
+[[and-earlier]]
+2.2 and earlier
+
+Prior to httpd 2.4, the way to enable mod_rewrite logging is with the
+`RewriteLog` and `RewriteLogLevel` directives.
+
+The `RewriteLog` directive should be set to the location of your rewrite
+log file, and the `RewriteLogLevel` is set to a value from 0 to 5 to
+indicate the desired verbosity of the log file, with 0 being no log
+entries, and 5 being to log every time mod_rewrite even thinks about
+doing something.
+
+You'll often find advice online suggesting that `RewriteLogLevel` be set
+to 9 for maximum verbosity. Numbers higher than 5 don't make it more
+verbose, but they also don't harm anything.
+
+----
+RewriteLog logs/rewrite.log
+RewriteLogLevel 5
+----
+
+[[and-later]]
+2.4 and later
+
+In the 2.4 version of the server, many changes were made to the way that
+logging works. One of these changes was the addition of per-module log
+configurations. This rendered the `RewriteLog` directive superfluous.
+So, from 2.4 on, rewrite logging is enabled using the `LogLevel`
+directive, specifying a `trace` log level for mod_rewrite.
+
+----
+LogLevel info rewrite:trace6
+----
+
+Rewrite log entries will now show up in the main error log file, as
+specified by the `ErrorLog` directive.
+
+[[whats-in-the-rewrite-log---an-example]]
+What's in the Rewrite log? - An example
+
+The best way to talk about what's in the rewrite log is to show you some
+examples of the kinds of things that mod_rewrite logs.
+
+Consider a simple rewrite scenario such as follows:
+
+----
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !index.php
+RewriteRule . /index.php [PT,L]
+
+LogLevel info rewrite:trace6
+
+# Or, in 2.2
+# RewriteLog Level 5
+# RewriteLog /var/log/httpd/rewrite.log
+----
+
+This ruleset says "If it's not already `index.php`, rewrite it to
+`index.php`.
+
+Now, we'll make a request for the URL http://localhost/example and see
+what gets logged:
+
+----
+[Thu Sep 12 20:22:13.363463 2013] [rewrite:trace2] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] init rewrite
+engine with requested uri /example
+
+[Thu Sep 12 20:22:13.363510 2013] [rewrite:trace3] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] applying
+pattern '.' to uri '/example'
+
+[Thu Sep 12 20:22:13.363525 2013] [rewrite:trace4] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] RewriteCond:
+input='/example' pattern='!index.php' => matched
+
+[Thu Sep 12 20:22:13.363533 2013] [rewrite:trace2] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] rewrite
+'/example' -> 'index.php'
+
+[Thu Sep 12 20:22:13.363542 2013] [rewrite:trace2] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] local path
+result: index.php
+
+[Thu Sep 12 20:22:13.575877 2013] [rewrite:trace2] [pid 11881]
+mod_rewrite.c(468): [client 127.0.0.1:56624] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] init rewrite
+engine with requested uri /favicon.ico
+
+[Thu Sep 12 20:22:13.575920 2013] [rewrite:trace3] [pid 11881]
+mod_rewrite.c(468): [client 127.0.0.1:56624] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] applying
+pattern '.' to uri '/favicon.ico'
+
+[Thu Sep 12 20:22:13.575935 2013] [rewrite:trace4] [pid 11881]
+mod_rewrite.c(468): [client 127.0.0.1:56624] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] RewriteCond:
+input='/favicon.ico' pattern='!index.php' => matched
+
+[Thu Sep 12 20:22:13.575943 2013] [rewrite:trace2] [pid 11881]
+mod_rewrite.c(468): [client 127.0.0.1:56624] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] rewrite
+'/favicon.ico' -> 'index.php'
+
+[Thu Sep 12 20:22:13.575955 2013] [rewrite:trace2] [pid 11881]
+mod_rewrite.c(468): [client 127.0.0.1:56624] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] local path
+result: index.php
+----
+
+This is an entry from a 2.4 server, and contains a few elements that
+will be missing from rewrite log entries for 2.2 and
+earlier.footnote:[Future editions of this book will contain full
+examples from a 2.2 server, for those still running that version.]
+
+Note that I've inserted linebreaks between each log entry for
+legibility. And speaking of legibility, let's consider one single log
+entry to see what the various components mean before we go any further.
+
+Let's look at the first log entry.
+
+:
+
+----
+[Thu Sep 12 20:22:13.363463 2013] [rewrite:trace2] [pid 11879]
+mod_rewrite.c(468): [client 127.0.0.1:56623] 127.0.0.1 - -
+[localhost/sid#7f985f445348][rid#7f985f949040/initial] init rewrite
+engine with requested uri /example
+----
+
+That's a lot to process all at once, so we'll break it down one field at
+a time.
+
+`[Thu Sep 12 20:22:13.363463 2013]`::
+  The date and time when the event occurred.
+`[rewrite:trace2]`::
+  The name of the module logging, and the loglevel at which it is
+  logging. This is 2.4-specific
+`[pid 1879]`::
+  The process id of the httpd process handling this request. This will
+  be the same across a given request. Note that in this example there
+  are two separate requests being handled, as you'll see in a moment.
+`mod_rewrite.c(468):`::
+  For in-depth debugging, this is the line number in the module source
+  code which is handling the current rewrite.
+`[client 127.0.0.1:56623]`::
+  The client IP address, and TCP port number on which the request
+  connection was made.
+`-`::
+  This field contains the client's username in the event that the
+  request was authenticated. In this example the request was not
+  authenticated, so a blank value is logged.
+`-`::
+  In the event that the request sent ident information, this will be
+  logged here. This hardly ever happens, and so this field will almost
+  always be `-`.
+`[localhost/sid#7f985f445348][rid#7f985f949040/initial]`::
+  This is the unique identifier for the request.
+`init rewrite engine with requested uri /example`::
+  Ahah! Finally! The actual log message from mod_rewrite!
+
+Now that you know what all of the various fields are in the log entry,
+let's just look at the ones we actually care about. Here's the log file
+again, with a lot of the superfluous information removed:
+
+----
+init rewrite engine with requested uri /example
+applying pattern '.' to uri '/example'
+RewriteCond: input='/example' pattern='!index.php' => matched
+rewrite '/example' -> 'index.php'
+local path result: index.php
+
+init rewrite engine with requested uri /favicon.ico
+applying pattern '.' to uri '/favicon.ico'
+RewriteCond: input='/favicon.ico' pattern='!index.php' => matched
+rewrite '/favicon.ico' -> 'index.php'
+local path result: index.php
+----
+
+I've removed the extraneous information, and split the log entries into
+two logical chunks.
+
+In the first bit, the requested URL `/example` is run through the
+ruleset and ends up getting rewritten to `/index.php`, as desired.
+
+In the second bit, the browser requests the URL `/favicon.ico` as a side
+effect of the initial request. `favicon` is the icon that appears in
+your browser address bar next to the URL, and is an automatic feature of
+most browsers. As such, you're likely to see mention of `favicon.ico` in
+your log files from time to time, and it's nothing to worry too much
+about. You can read more about favicons at
+<http://en.wikipedia.org/wiki/Favicon>.
+
+Follow through the log lines for the first of the two requests.
+
+First, the rewrite engine is made aware that it needs to consider a URL,
+and the `init rewrite engine` log entry is made.
+
+Next, the `RewriteRule` pattern `.` is applied to the requested URI
+`/example`, and this comparison is logged. In your configuration file,
+the `RewriteRule` appears after the `RewriteCond`, but at request time,
+the `RewriteRule` pattern is applied first.
+
+Since the pattern does match, in this case, we continue to the
+`RewriteCond`, and the pattern `!index.php` is applied to the string
+`/example`. Both the pattern and the string it is being applied to are
+logged, which can be very useful later on in debugging rules that aren't
+behaving quite as you intended. This log line also tells you that the
+pattern `matched`.
+
+Since the `RewriteRule` pattern and the `RewriteCond` both matched, we
+continue on to the right hand side of the `RewriteRule` and apply the
+rewrite, and `/example` is rewritten to `index.php`, which is also
+logged. A final log entry tells us what the local path result ends up
+being after this process, which is `index.php`.
+
+This kind of detailed log trail tells you very specifically what's going
+on, and what happened at each step.footnote:[Future editions of this
+bill will contain an appendix in which several log traces are explained
+in exhaustive detail. I can hardly wait.]
+
+[[rewriterules-in-.htaccess-files---an-example]]
+RewriteRules in .htaccess files - An example
+
+We've previously discussed using mod_rewrite in .htaccess files, but
+it's time to see what this actually looks like in practice. Let's
+replace the configuration file entry above with a .htaccess file
+instead, placed in the root document directory of our website. So, I'm
+going to comment out several lines in the server configuration:
+
+----
+# RewriteEngine On
+# RewriteCond %{REQUEST_URI} !index.php
+# RewriteRule . /index.php [PT,L]
+
+LogLevel info rewrite:trace6
+
+# Or, in 2.2
+# RewriteLog Level 5
+# RewriteLog /var/log/httpd/rewrite.log
+----
+
+And instead, I'm going to place the following .htaccess file:
+
+----
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !index.php                                     
+RewriteRule . /index.php [PT,L]
+----
+
+Now, see what the log file looks like:
+
+For the sake of brevity, let's look at just the actual log messages, and
+ignore all of the extra information:
+
+----
+[perdir /var/www/html/] strip per-dir prefix: /var/www/html/example -> example
+[perdir /var/www/html/] applying pattern '.' to uri 'example'
+[perdir /var/www/html/] input='/example' pattern='!index.php' => matched
+[perdir /var/www/html/] rewrite 'example' -> '/index.php'
+[perdir /var/www/html/] forcing '/index.php' to get passed through to next API URI-to-filename handler
+[perdir /var/www/html/] internal redirect with /index.php [INTERNAL REDIRECT]
+[perdir /var/www/html/] strip per-dir prefix: /var/www/html/index.php -> index.php
+[perdir /var/www/html/] applying pattern '.' to uri 'index.php'
+[perdir /var/www/html/] RewriteCond: input='/index.php' pattern='!index.php' => not-matched
+[perdir /var/www/html/] pass through /var/www/html/index.php
+----
+
+The first thing you'll notice, of course, is that this is much longer
+than what we had before. Running rewrite rules in .htaccess files
+generally takes several more steps than when the rules are in the server
+configuration file, which is one of several reasons that using .htaccess
+files is so much less efficient (i.e., slower) than using the server
+configuration file.
+
+Whenever possible, you should use the server configuration file rather
+than .htaccess files. (There are other reasons for this, too.)
+
+Next, you'll notice that each log entry contains the preface:
+
+----
+[perdir /var/www/html]
+----
+
+`perdir` refers to rewrite directives that occur in per directory
+context - i.e., .htaccess files or `<Directory>` blocks. They are
+treated special in a few different ways, as we'll see.
+
+The first of these is shown in the first log entry:
+
+----
+strip per-dir prefix: /var/www/html/example -> example
+----
+
+What that means is that in perdir context, the directory path is removed
+from any string before they are considered in the pattern match. Thus,
+rather than considering the string `/example`, as we did the first time
+through, now we're looking at the string `example`. While this may seem
+trivial at this point, as we proceed to more complex examples, that
+leading slash will be the difference between a pattern matching and not
+matching, so you need to be aware of this every time you use `.htaccess`
+files.
+
+The next few lines of the log proceed as before, except that we're
+looking at `example` rather than `/example` in each line. Carefully
+compare the log entries from the first time through to the ones this
+time.
+
+What happens next is a surprise to most first-time users of mod_rewrite.
+The requested URI `example` is redirected to the URI `/index.php`, and
+the whole process starts over again with that new URL. This is because,
+in perdir context, once a rewrite has been executed, that target URL
+must get passed back to the URL mapping process to determine what that
+URL maps to ... which may include invoking a .htaccess file.
+
+In this case, this causes the ruleset to be executed all over again,
+with the rewritten URL `/index.php`.
+
+The remainder of the log should look very familiar. It's the same as
+what we saw before, with `/index.php` getting stripped to `index.php`
+and run through the paces. This time around, however, the `RewriteCond`
+does not match, and so the request is passed through unchanged.
+
+[[rewrite-examples]]
+==== Rewrite Examples
+
+TODO
+
+This section will present a cookbook of common examples of how you'll
+use mod_rewrite in the real world. Each example is presented as a
+problem statement, a solution, and then a discussion of the solution and
+possible alternatives.
+
+This chapter is likely to evolve over time, and so you are encouraged to
+check back at <http://mod-rewrite.org/> frequently for updates.
+
+

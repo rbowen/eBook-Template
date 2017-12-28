@@ -1,6 +1,6 @@
 :author: Rich Bowen
 :revdate: {docdate}
-:revnumber: 0.02
+:revnumber: 0.03
 :email:  rbowen@apache.org
 :copyright: CC-BY-SA 3.0
 :doctype: book
@@ -74,6 +74,10 @@ include::chapters/00_preface.adoc[]
 :sectnums:
 
 include::chapters/01_regex.adoc[]
+
+include::chapters/02_url_mapping.adoc[]
+
+include::chapters/03_mod_rewrite.adoc[]
 
 // ifndef::backend-epub3[:leveloffset: +1]
 // include::chapters/book_thrills.adoc[]
