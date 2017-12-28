@@ -124,7 +124,7 @@ include::chapters/12_content_munging.adoc[]
 
 // include::chapters/epigraph.adoc[]
 
-// include::chapters/appendix.adoc[]
+include::chapters/appendix.adoc[]
 
 // include::chapters/shortcuts.adoc[]
 
