@@ -105,7 +105,7 @@ I have copied shamelessly from the documentation, I humbly ask you to remember t
 I participated in writing those docs, and the edits flowed both directions -- that 
 is, sometimes it was the docs that shamelessly copied from the book.
 
-This book does **not** attempt to be a comprehensive book about the
+This book does *not* attempt to be a comprehensive book about the
 Apache web server. For that, I encourage you to look the documentation
 and also at my other book,
 *Apache Cookbook, Third Edition*, by Rich Bowen and Ken Coar,
@@ -149,8 +149,8 @@ and I'll send you an updated version.
 === About the Author
 
 Rich Bowen has been involved on the Apache http server documentation
-since about 1998. He is also the author of **Apache Cookbook**, and **The
-Definitive Guide to Apache mod_rewrite**. You can frequently find him in
+since about 1998. He is also the author of *Apache Cookbook*, and *The
+Definitive Guide to Apache mod_rewrite*. You can frequently find him in
 #httpd, on `irc.freenode.net`. under the name of DrBacchus or rbowen.
 
 Rich works at Red Hat, in the OSAS (Open Source and Standards) group,

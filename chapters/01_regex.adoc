@@ -14,7 +14,7 @@ indexterm:["Friedl, Jeffrey"]
 
 There is one excellent book about regular expressions, and if you want
 to become a regular expression (or "regex") guru, you should get it. That
-book is **Mastering Regular Expressions** <http://regex.info/book.html> by
+book is *Mastering Regular Expressions* <http://regex.info/book.html> by
 Jeffrey Friedl.
 
 If you just want to know enough about regex to master mod_rewrite, read
@@ -387,7 +387,7 @@ with `$1` set to "a", since it is non-greedy, and so stops at the first n it see
 TODO Recommend the correct regex tool
 
 It is instructive to acquire a tool such as Regex Coach, or Rebug, mentioned in the <<Regex_Tools>> section below, and feed them these patterns and strings, to watch them match the different parts 
-of the string. **Mastering Regular Expressions** also has a very complete treatment of 
+of the string. *Mastering Regular Expressions* also has a very complete treatment of 
 backreferences, greedy matching, and what actually happens during the matching phase.
 
 === Character Classes
