@@ -1,3 +1,5 @@
+**Content included in preface.adoc**
+
 [dedication]
 = Dedication
 

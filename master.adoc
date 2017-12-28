@@ -63,38 +63,38 @@ EPUB generation uses the "bw" style (i.e., black and white.)
 
 :sectnums!:
 
-include::chapters/00_colophon.adoc[]
-
 // Abstract and Dedication MUST have a level-0 heading in EPUB and Kindle
 // but level-1 in PDF and HTML
 ifndef::backend-epub3[:leveloffset: +1]
-include::chapters/01_dedication.adoc[]
+// include::chapters/01_dedication.adoc[]
 ifndef::backend-epub3[:leveloffset: -1]
 
 include::chapters/02_preface.adoc[]
 
 :sectnums:
 
-ifndef::backend-epub3[:leveloffset: +1]
-include::chapters/book_thrills.adoc[]
+// ifndef::backend-epub3[:leveloffset: +1]
+// include::chapters/book_thrills.adoc[]
 
-include::chapters/jane.adoc[]
-ifndef::backend-epub3[:leveloffset: -1]
+// include::chapters/jane.adoc[]
+// ifndef::backend-epub3[:leveloffset: -1]
 
-include::chapters/epigraph.adoc[]
+// include::chapters/epigraph.adoc[]
 
-include::chapters/appendix.adoc[]
+// include::chapters/appendix.adoc[]
 
-include::chapters/shortcuts.adoc[]
+// include::chapters/shortcuts.adoc[]
 
-include::chapters/glossary.adoc[]
+// include::chapters/glossary.adoc[]
 
-include::chapters/qanda.adoc[]
-
-include::chapters/bibliography.adoc[]
-
+// include::chapters/qanda.adoc[]
 
 ifdef::backend-pdf[]
 include::chapters/index.adoc[]
 endif::[]
+
+:sectnums!:
+include::chapters/bibliography.adoc[]
+include::chapters/ZZA_colophon.adoc[]
+:sectnums:
 
