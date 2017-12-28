@@ -1,0 +1,6 @@
+gem install prawn
+gem install addressable prawn-svg prawn-templates
+ \tgem install asciidoctor-pdf --pre\n
+gem install rouge
+gem install pygments.rb
+

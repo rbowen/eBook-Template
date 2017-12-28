@@ -2,7 +2,6 @@ DIR = _build
 INPUT = master
 OUTPUT = book
 DIAGRAM = --require=asciidoctor-diagram
-MATH = --require=asciidoctor-mathematical
 REQUIRES = ${DIAGRAM} ${MATH}
 OUTPUT_FOLDER = --destination-dir=${DIR}
 MANPAGE = --backend=manpage

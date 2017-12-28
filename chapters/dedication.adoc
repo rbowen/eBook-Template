@@ -1,7 +1,6 @@
 [dedication]
 = Dedication
 
-For S.S.T.--
+This book is dedicated to Ralf, for all he gave us.
 
-thank you for the plague of archetypes.
 

@@ -43,6 +43,7 @@ UIResponder <|-- UIViewController
 ....
 
 == Conclusion
+indexterm:[Foo]
 
 Chapter one is over. But before we leave, a checklist of stuff not to forget:
 
