@@ -1,6 +1,6 @@
 :author: Rich Bowen
 :revdate: {docdate}
-:revnumber: 0.01
+:revnumber: 0.02
 :email:  rbowen@apache.org
 :copyright: CC-BY-SA 3.0
 :doctype: book
@@ -63,15 +63,15 @@ EPUB generation uses the "bw" style (i.e., black and white.)
 
 :sectnums!:
 
-include::chapters/colophon.adoc[]
+include::chapters/00_colophon.adoc[]
 
 // Abstract and Dedication MUST have a level-0 heading in EPUB and Kindle
 // but level-1 in PDF and HTML
 ifndef::backend-epub3[:leveloffset: +1]
-include::chapters/dedication.adoc[]
+include::chapters/01_dedication.adoc[]
 ifndef::backend-epub3[:leveloffset: -1]
 
-include::chapters/preface.adoc[]
+include::chapters/02_preface.adoc[]
 
 :sectnums:
 
