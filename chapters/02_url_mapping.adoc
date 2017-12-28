@@ -230,18 +230,18 @@ the form /path/. No scheme, hostname, port, or query string may be
 included. For proxy requests, the URL to be matched is of the form
 scheme://servername/path, and you must include the prefix.
 
-The URL may use wildcards. In a wild-card string, ? matches any single
-character, and * matches any sequences of characters. Neither wildcard
+The URL may use wildcards. In a wild-card string, `?` matches any single
+character, and `*` matches any sequences of characters. Neither wildcard
 character matches a / in the URL-path.
 
 Regular expressions can also be used, with the addition of the ~
 character. For example:
 
-....
+----
 <Location ~ "/(extra|special)/data">
     #...
 </Location>
-....
+----
 
 would match URLs that contained the substring /extra/data or
 /special/data. The directive <LocationMatch> behaves identically to the
@@ -249,26 +249,26 @@ regex version of <Location>, and is preferred, for the simple reason
 that ~ is hard to distinguish from - in many fonts, leading to
 configuration errors when you're following examples.
 
-::::
-  <LocationMatch "/(extra|special)/data">;;
+----
+  <LocationMatch "/(extra|special)/data">
     #...
   +
   </LocationMatch>
+----
 
 The <Location> functionality is especially useful when combined with the
 SetHandler directive. For example, to enable status requests, but allow
 them only from browsers at example.com, you might use:
 
-....
+----
 <Location /status>
   SetHandler server-status
   Require host example.com
 </Location>
-....
+----
 
 [[virtual-hosts]]
-Virtual Hosts
-~~~~~~~~~~~~~
+=== Virtual Hosts
 
 Rather than running a separate physical server, or separate instance of
 httpd, for each website, it is common practice run sites via virtual
@@ -282,24 +282,31 @@ IP addresses and preference. Name-based virtual hosting is more common,
 but there are scenarios in which IP-based hosting may be preferred.
 
 [[proxying]]
-Proxying
-~~~~~~~~
+=== Proxying
+
+TODO
 
 [[mod_actions]]
-mod_actions
-~~~~~~~~~~~
+=== mod_actions
+
+TODO
 
 [[mod_imagemap]]
-mod_imagemap
-~~~~~~~~~~~~
+=== mod_imagemap
+
+TODO
 
 [[mod_negotiation]]
-mod_negotiation
-~~~~~~~~~~~~~~~
+=== mod_negotiation
+
+TODO
 
 [[file-not-found]]
-File not found
-~~~~~~~~~~~~~~
+=== File not found
 
 In the event that a requested resource is not available, after all of
 the above mentioned methods are attempted to find it ...
+
+TODO
+
+

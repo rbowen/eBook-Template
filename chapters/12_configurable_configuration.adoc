@@ -1,10 +1,8 @@
 [[conditional-configuration]]
-Conditional Configuration
--------------------------
+== Conditional Configuration
 
 [[introduction]]
-Introduction
-~~~~~~~~~~~~
+=== Introduction
 
 While the Apache httpd configuration files have always had some ways to
 make things conditional, with the advent of version 2.4, there's an
@@ -17,14 +15,12 @@ it is specific to version 2.4 and later, while some of it has been
 available for years.
 
 [[match-directive]]
-*Match Directive
-~~~~~~~~~~~~~~~~
+=== Match Directives
 
 FilesMatch, RedirectMatch, etc.
 
 [[ifdefine]]
-IfDefine
-~~~~~~~~
+=== IfDefine
 
 The `IfDefine` directive provides a way to make blocks of your
 configuration file optional, depending on the presence, or absence, of
@@ -87,8 +83,7 @@ _____________________________________________________
 (The space between `-D` and the flag is optional.)
 
 [[define]]
-Define
-~~~~~~
+=== Define
 
 New with the 2.3 (and later) version of the server is the `Define`
 directive, which lets you define variables within the configuration
@@ -132,8 +127,7 @@ DocumentRoot ${docroot}
 ....
 
 [[if-elsif-and-else]]
-<If>, <Elsif>, and <Else>
-~~~~~~~~~~~~~~~~~~~~~~~~~
+=== <If>, <Elsif>, and <Else>
 
 New in Apache httpd 2.4 is the ability to put `<If>` blocks in your
 configuration file to make it truly conditional. This provides a level
@@ -149,8 +143,7 @@ this to you in some situations.
 Consider the following examples to give you some ideas:
 
 [[canonical-hostname]]
-Canonical hostname
-^^^^^^^^^^^^^^^^^^
+==== Canonical hostname
 
 In many situations, it is desirable to enforce a particular hostname on
 your website. For example, if you are setting cookies, you need to
@@ -172,8 +165,7 @@ perform this redirection, but `<If>` provides a more intuitive syntax:
 ....
 
 [[image-hotlinking]]
-Image hotlinking
-^^^^^^^^^^^^^^^^
+==== Image hotlinking
 
 You may wish to prevent another website from embedding your images in
 their pages - so-called image hotlinking. This is usually done by
@@ -191,8 +183,7 @@ ensure that the request originated within a page on your site:
 ....
 
 [[mod_macro]]
-mod_macro
-~~~~~~~~~
+=== mod_macro
 
 `mod_macro` has been around for a while, but with the 2.4 version of the
 server it is now one of the modules that comes with the server itself,
@@ -209,29 +200,24 @@ configuration is then loaded as though it was a static configuration
 file on disk.
 
 [[mod_proxy_express]]
-mod_proxy_express
-~~~~~~~~~~~~~~~~~
+=== mod_proxy_express
 
 [[mod_vhost_alias]]
-mod_vhost_alias
-~~~~~~~~~~~~~~~
+=== mod_vhost_alias
 
 [[conditional-logging]]
-Conditional logging
-~~~~~~~~~~~~~~~~~~~
+==== Conditional logging
 
 [[env]]
-env=
-^^^^
+==== env=
 
 [[per-module-logging]]
-Per-module logging
-^^^^^^^^^^^^^^^^^^
+==== Per-module logging
 
 [[per-directory-logging]]
-Per-directory logging
-^^^^^^^^^^^^^^^^^^^^^
+==== Per-directory logging
 
 [[piped-logging]]
-Piped logging
-^^^^^^^^^^^^^
+==== Piped logging
+
+
