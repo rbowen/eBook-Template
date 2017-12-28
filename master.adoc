@@ -65,18 +65,20 @@ EPUB generation uses the "bw" style (i.e., black and white.)
 
 // Abstract and Dedication MUST have a level-0 heading in EPUB and Kindle
 // but level-1 in PDF and HTML
-ifndef::backend-epub3[:leveloffset: +1]
+// ifndef::backend-epub3[:leveloffset: +1]
 // include::chapters/01_dedication.adoc[]
-ifndef::backend-epub3[:leveloffset: -1]
+// ifndef::backend-epub3[:leveloffset: -1]
 
-include::chapters/02_preface.adoc[]
+include::chapters/00_preface.adoc[]
 
 :sectnums:
+
+include::chapters/01_regex.adoc[]
 
 // ifndef::backend-epub3[:leveloffset: +1]
 // include::chapters/book_thrills.adoc[]
 
-// include::chapters/jane.adoc[]
+//include::chapters/jane.adoc[]
 // ifndef::backend-epub3[:leveloffset: -1]
 
 // include::chapters/epigraph.adoc[]
@@ -94,7 +96,7 @@ include::chapters/index.adoc[]
 endif::[]
 
 :sectnums!:
-include::chapters/bibliography.adoc[]
-include::chapters/ZZA_colophon.adoc[]
+// include::chapters/bibliography.adoc[]
+// include::chapters/ZZA_colophon.adoc[]
 :sectnums:
 

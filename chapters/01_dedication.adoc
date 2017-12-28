@@ -1,8 +1,0 @@
-**Content included in preface.adoc**
-
-[dedication]
-= Dedication
-
-This book is dedicated to Ralf, for all he gave us.
-
-
