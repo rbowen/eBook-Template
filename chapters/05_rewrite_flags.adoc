@@ -1,5 +1,5 @@
-[[flags]]
-==== Flags
+[[Chapter_rewriterule_flags]]
+== RewriteRule Flags
 
 Flags modify the behavior of the rule. You may have zero or more flags,
 and the effect is cumulative. Flags may be repeated where appropriate.
@@ -217,8 +217,7 @@ RewriteRule \.pdf$ [E=document:1,E=pdf:1,E=done]
 ----
 
 [[end]]
-END
-+++
+=== END
 
 Although the flags are presented here in alphabetical order, it makes
 more sense to go read the section about the L flag first (ref\{lflag})
@@ -231,7 +230,7 @@ processing from occurring in per-directory (htaccess) context.
 This does not apply to new requests resulting from external redirects.
 
 [[f---forbidden]]
-F - forbidden
+=== F - forbidden
 
 Using the `[F]` flag causes the server to return a 403 Forbidden status
 code to the client. While the same behavior can be accomplished using
@@ -253,7 +252,7 @@ When using `[F]`, an `[L]` is implied - that is, the response is
 returned immediately, and no further rules are evaluated.
 
 [[g---gone]]
-G - gone
+=== G - gone
 
 The `[G]` flag forces the server to return a 410 Gone status with the
 response. This indicates that a resource used to be available, but is no
@@ -270,7 +269,7 @@ When using `[G]`, an `[L]` is implied - that is, the response is
 returned immediately, and no further rules are evaluated.
 
 [[h---handler]]
-H - handler
+=== H - handler
 
 Forces the resulting request to be handled with the specified handler.
 For example, one might use this to force all files without a file
@@ -342,7 +341,7 @@ See the RewriteCond chapter for further discussion of the RewriteCond
 directive.
 
 [[n---next]]
-N - next
+=== N - next
 
 The `[N]` flag causes the ruleset to start over again from the top,
 using the result of the ruleset so far as a starting point. Use with
@@ -362,7 +361,7 @@ You can think of this as a while loop: While this pattern still matches
 (i.e., replace the A with a B).
 
 [[nc---nocase]]
-NC - nocase
+=== NC - nocase
 
 Use of the `[NC]` flag causes the `RewriteRule` to be matched in a
 case-insensitive manner. That is, it doesn't care whether letters appear
@@ -377,7 +376,7 @@ RewriteRule (.*\.(jpg|gif|png))$ http://images.example.com$1 [P,NC]
 ----
 
 [[ne---noescape]]
-NE - noescape
+=== NE - noescape
 
 By default, special characters, such as `\&` and `?`, for example, will
 be converted to their hexcode equivalent. Using the `[NE]` flag prevents

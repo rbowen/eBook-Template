@@ -3,7 +3,11 @@
 
 `mod_rewrite` is one of the most powerful modules that comes with the
 Apache http server. It's also one of the most frequently misused, and
-least understood.
+least understood. Thousands of examples are posted daily on various
+websites, showing beginners how to do things with `mod_rewrite`, and,
+unfortunately, the vast majority of them are wrong in various ways,
+subtle or grevious, due to misunderstandings of how `mod_rewrite` works,
+or how regular expressions work.
 
 This book is a humble attempt to disperse some of the mystery
 surrounding `mod_rewrite` and make its power accessible to all users of
@@ -16,8 +20,7 @@ It will also cover many of the cases in which you should not use
 
 The first incarnation of this book, 
 *The Definitive Guide to Apache mod_rewrite* - <http://drbacchus.com/book/rewrite>,
-was published in 2006.
-
+was published in 2006.  
 Since then, so much has changed that while that book is still useful,
 it's far from complete.
 
@@ -43,6 +46,56 @@ way, we'll also discuss the various parts of URL mapping, the
 understanding of which allows you to avoid using these more complicated
 techniques.
 
+=== How this book is organized
+
+This book consists of 11 chapters. Depending on your level of existing
+expertise, some of them can be safely skipped.
+
+Chapter 1 - <<Chapter_regular_expressions>>  - This chapter gives an
+introduction to regular expressions, which are the language of
+`mod_rewrite`. 
+
+Chapter 2 - <<Chapter_url_mapping>> - URL rewriting is a portion of a
+larger topic called URL mapping - the process by which Apache httpd
+translates a requested URL into an actual resource that it will serve.
+
+Chapter 3 - <<Chapter_mod_rewrite>> - An introduction to `mod_rewrite`,
+covering some of the configuration directives that need to be set up
+before you start rewriting.
+
+Chapter 4 - <<Chapter_rewriterule>> - The `RewriteRule` directive is the
+one you'll be using most often. This chapter covers its syntax and
+usage.
+
+Chapter 5 - <<Chapter_rewriterule_flags>> - Flags modify the behavior of
+`RewriteRule`. They've been introduced in the previous chapter, but this
+chapter covers each flag in detail, with examples.
+
+Chapter 6 - <<Chapter_rewritecond>> - `RewriteCond` allows you to put
+conditions on the running of a particular `RewriteRule`.
+
+Chapter 7 - <<Chapter_rewritemap>> - The `RewriteMap` directive allows
+you to craft your own `RewriteRule` logic and lookup tables.
+
+Chapter 8 - <<Chapter_proxy>> - `RewriteRule`'s `[P]` flag lets you pass
+a request through a proxy. This chapter digs into that in greater
+detail.
+
+Chapter 9 - <<Chapter_vhosts>> - Using `RewriteRule` to manage virtual
+hosts.
+
+Chapter 10 - <<Chapter_access>> - Using `RewriteRule` to control or
+restrict access to resources.
+
+Chapter 11 - <<Chapter_configurable_configuration>> - New in version 2.4
+of the web server is a class of directives that let you add intelligence
+and request-time decisions to the configuration. These techniques
+replace many of the things that people used to use `mod_rewrite` for.
+
+Chapter 12 - <<Chapter_content_munging>> - In this chapter, we
+discuss rewriting content sent to the client, which is not something
+that `mod_rewrite` does.
+
 === Other Sources of Wisdom
 
 A brief word about the documentation. The official docs, at <http://httpd.apache.org/docs/current>,
@@ -55,7 +108,8 @@ is, sometimes it was the docs that shamelessly copied from the book.
 This book does **not** attempt to be a comprehensive book about the
 Apache web server. For that, I encourage you to look the documentation
 and also at my other book,
-Apache Cookbook, Third Edition, which should be available around the
+*Apache Cookbook, Third Edition*, by Rich Bowen and Ken Coar,
+which should be available around the
 same time that this book is published.
 
 You should also acquire a copy of Jeffrey Friedl's excellent book,

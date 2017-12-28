@@ -1,4 +1,4 @@
-[[Chapter_Regular_Expressions]]
+[[Chapter_regular_expressions]]
 == Regular Expressions
 indexterm:[Regular expressions]
 indexterm:[Introduction to regular expressions]
@@ -6,7 +6,7 @@ indexterm:[Regex]
 
 Much of the content in this book requires that you have some mastery
 of regular expressions. Indeed, in my years of teaching mod_rewrite,
-it has been my observation that people don't find mod_rewrite hard at
+it has been my observation that most people don't find mod_rewrite hard at
 all: they're just intimidated by regular expressions.
 
 indexterm:[Mastering Regular Expressions by Jeffrey Friedl]
@@ -53,7 +53,7 @@ indexterm:[Regular expression vocabulary]
 |$  |        An anchor which insists that the string ends with the specified pattern. `X$` means that the string must end with X.
 |\+ |        Match the previous thing one or more times. So `a+` means one or more a's.
 |\* |        Match the previous thing zero or more times. This is the same as +, except that it's also acceptable if the thing wasn't there at all.
-|?  |        Match the previous thing zero or one times. In other words, it makes it optional. It also makes the * and + characters non-greedy. See <<Greedy>>.
+|?  |        Match the previous thing zero or one times. In other words, it makes it optional. It also makes the `*` and `+` characters non-greedy. See <<Greedy>>.
 |{n,m}  |    Indicates that the previous thing should match at least n, and not more than m times. For example, `a{2,7}` matches at least 2, and not more than 7, occurrences of the letter a
 |( )    |    Provides grouping and capturing functions. Grouping means treating more than one character as though they were a single unit. You can apply repetition characters to a group created in this way.
             Capturing means remembering the thing that matched, so that we can use it again later. This is called a 'backreference.'
@@ -294,8 +294,8 @@ indexterm:[Greedy matching,examples]
 .Examples of greedy matching
 |============================
 |Pattern | Matches
-|/(.*)/  | one/two/three
-|/(.*?)/ | one
+|`/(.*)/`  | one/two/three
+|`/(.*?)/` | one
 |============================
 
 The first regex is greedy, and matches as much as it possibly can, going
@@ -421,7 +421,7 @@ the class. The character class `[^abc]` is the opposite of the character class `
 matches any character which is not a, b, or c.
 
 Which brings us back to the example above, where we are attempting to match a 
-username starting with a, b, or c. The problem with the example is that the * character is 
+username starting with a, b, or c. The problem with the example is that the `*` character is 
 greedy, meaning that it attempts to match as much as it possibly can. If we want to force it to 
 stop matching when it reaches a slash, we need to match only "not slash" characters:
 
@@ -476,9 +476,9 @@ To express this as a regular expression, let's take the component parts. The cat
 "something" part can likely be expressed as `.*` and the `.` and `@` parts are literal characters.
 So, this gives us a starting point of:
 
-::
-
-    .*@.*\..*
+----
+.*@.*\..*
+----
 
 This is a good start, and matches most email addresses. It will probably match all email 
 addresses. However, it will also match a lot of stuff that isn't email addresses, like 
@@ -622,9 +622,9 @@ any of the following four strings:
 
 We'll build on the regex that we had last time, adding these additional requirements:
 
-::
-
-    ^/?(index\.(html|php))?$
+----
+^/?(index\.(html|php))?$
+----
 
 This isn't quite right, as you'll see in a moment, but it's mostly right. It does, however, introduce a new syntax that hasn't been mentioned heretofore. That is the `|` syntax, which has 
 the fancy name of "alternation" and means "one or the other." So (html|php) means "either 'html' or 'php'."
