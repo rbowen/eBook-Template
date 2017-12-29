@@ -41,7 +41,7 @@ mod_rewrite unnecessary, or, at least, provide easier alternatives, so
 they fit the scope of the book very well.
 
 These techniques include mod_substitute, mod_proxy_html, the `Define`
-directive, the `<If>` container, mod_macro, and many more. Along the
+directive, the `<If>` container, `mod_macro`, and many more. Along the
 way, we'll also discuss the various parts of URL mapping, the
 understanding of which allows you to avoid using these more complicated
 techniques.
